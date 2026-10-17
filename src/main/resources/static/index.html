@@ -1,0 +1,473 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><script>try{document.documentElement.dataset.theme=localStorage.theme||"light"}catch(e){document.documentElement.dataset.theme="light"}</script><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Velo | Cab booking</title><meta name="description" content="Book and manage cab rides."><meta name="theme-color" content="#060d1f"><link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&family=Playfair+Display:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#060d1f;--g:rgba(10,20,45,.78);--b:rgba(226,194,90,.24);--t:#f4f1e8;--m:#9aa8c6;--a:#e2c25a;--a2:#b8892b;--r:#a32749}
+*{box-sizing:border-box;margin:0}body{font:15px/1.45 Sora,system-ui,sans-serif;background:var(--bg);color:var(--t);overflow:hidden}
+#map{position:fixed;inset:0;background:#0a1530}.leaflet-container{background:#0a1530}
+.glass{background:var(--g);backdrop-filter:blur(22px) saturate(1.5);-webkit-backdrop-filter:blur(22px) saturate(1.5);border:1px solid var(--b);box-shadow:0 24px 70px #000b,inset 0 1px #ffffff14}
+#top{position:fixed;top:14px;left:14px;right:14px;display:flex;justify-content:space-between;align-items:center;z-index:600;pointer-events:none;gap:10px}#top>*{pointer-events:auto}
+.pad{padding:8px 14px;border-radius:18px;display:flex;align-items:center;gap:10px;font-size:13px}.pad button{padding:7px 12px;font-size:12px}
+.logo{font-weight:800;font-size:22px;letter-spacing:-1px}.logo i{color:var(--a);font-style:normal}
+#panel{position:fixed;z-index:500;left:16px;bottom:16px;width:410px;max-width:calc(100% - 32px);max-height:72vh;overflow:auto;padding:22px;border-radius:28px;display:flex;flex-direction:column;gap:12px}
+#panel.c{left:50%;top:50%;bottom:auto;transform:translate(-50%,-50%);width:440px;max-height:94vh;max-width:calc(100% - 24px)}
+h1{font-size:28px;letter-spacing:-1px;background:linear-gradient(120deg,#fff,var(--a));-webkit-background-clip:text;color:transparent}h2{font-size:22px;letter-spacing:-.5px}h3{font-size:12px;color:var(--m);text-transform:uppercase;letter-spacing:1.5px}
+.m{color:var(--m);font-size:13px}a{color:var(--a);cursor:pointer}
+button{font:inherit;font-weight:600;cursor:pointer;border:0;border-radius:15px;padding:14px 18px;color:#07080d;background:linear-gradient(135deg,var(--a),var(--a2));transition:.18s;box-shadow:0 8px 24px #e2c25a33}
+button:hover{transform:translateY(-2px);filter:brightness(1.1)}button.s{background:#ffffff14;color:var(--t);box-shadow:none}button.d{background:var(--r);color:#fff;box-shadow:0 8px 24px #a3274933}button:disabled{opacity:.4}
+input[type=text],input[type=email],input[type=password],input:not([type]){width:100%;padding:14px 16px;border-radius:14px;border:1px solid var(--b);background:#ffffff0d;color:var(--t);font:inherit;outline:0}input:focus{border-color:var(--a)}
+.seg{display:flex;gap:8px;flex-wrap:wrap}.seg>*{flex:1}.seg label{padding:12px;border-radius:14px;background:#ffffff0d;text-align:center;cursor:pointer}
+.pt{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:#ffffff09;font-size:14px}.pt i{width:10px;height:10px;border-radius:50%;flex:none}
+.big{font-size:40px;font-weight:800;letter-spacing:-2px}.big small{font-size:13px;font-weight:400;color:var(--m);margin-left:10px;letter-spacing:0}
+.st{font-size:20px;font-weight:800;letter-spacing:-.5px}.bar{display:flex;gap:5px}.bar b{flex:1;height:5px;border-radius:5px;background:#ffffff1a}.bar b.on{background:linear-gradient(90deg,var(--a),var(--a2));box-shadow:0 0 12px var(--a)}
+.card{padding:14px;border-radius:16px;background:#ffffff0d;border:1px solid var(--b);display:flex;flex-direction:column;gap:8px}.h{display:flex;justify-content:space-between;font-size:13px;color:var(--m);gap:8px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stats div{padding:12px;border-radius:16px;background:#ffffff0d}.stats small{display:block;color:var(--m);font-size:11px}.stats b{font-size:20px}
+#toast{position:fixed;top:78px;left:50%;transform:translate(-50%,-30px);opacity:0;z-index:900;padding:12px 20px;border-radius:14px;background:#13224a;border:1px solid var(--b);transition:.3s;pointer-events:none}#toast.show{opacity:1;transform:translate(-50%,0)}
+#admin{position:fixed;inset:0;z-index:400;background:radial-gradient(900px 500px at 80% -10%,#a3274944,transparent),var(--bg);overflow:auto;padding:84px 24px 40px}
+#admin .w{max-width:1100px;margin:auto;display:flex;flex-direction:column;gap:18px}.kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}.kp div{padding:18px;border-radius:20px}.kp small{color:var(--m)}.kp b{display:block;font-size:30px;letter-spacing:-1px}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:10px 12px;text-align:left;border-bottom:1px solid var(--b)}th{color:var(--m);font-weight:400}tr.sos{background:#a3274922}.tw{overflow:auto;border-radius:20px;padding:6px}td button{padding:6px 12px;font-size:12px}
+@media(max-width:600px){#panel{left:8px;right:8px;bottom:8px;width:auto;max-width:none}#panel.c{left:50%;right:auto;width:calc(100% - 24px)}}
+
+h1,h2,.big,.st,.logo,.stats b,.kp b{font-family:'Playfair Display',Georgia,serif}
+.logo{font-size:19px;letter-spacing:6px;text-transform:uppercase;font-weight:800}
+.leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) sepia(.35) saturate(.7) brightness(.92) contrast(.95)}
+#auth{position:fixed;inset:0;z-index:450;background:radial-gradient(900px 560px at 12% 0%,#5a1428cc,transparent),radial-gradient(700px 480px at 100% 100%,#e2c25a1c,transparent),#050505}
+#panel.c{border-color:#e2c25a55;box-shadow:0 30px 90px #000,0 0 60px #7a1f3d44}
+button{letter-spacing:.3px}
+.scene{width:100%;display:block;border-radius:20px;border:1px solid var(--b)}
+.car{animation:car 12s infinite}.wh{transform-box:fill-box;transform-origin:center;animation:spin 12s infinite}
+.door{transform-box:fill-box;transform-origin:left center;animation:door 12s infinite}
+.pax{animation:pax 12s infinite}.bob{animation:bob .4s infinite}.pin{animation:pin 1.6s ease-in-out infinite}.lane{animation:lane 1s linear infinite}
+@keyframes car{0%{transform:translateX(-290px);animation-timing-function:cubic-bezier(.15,.7,.25,1)}28%{transform:none}66%{transform:none;animation-timing-function:cubic-bezier(.5,0,.9,.6)}92%,100%{transform:translateX(340px)}}
+@keyframes spin{0%{transform:rotate(0)}28%,66%{transform:rotate(900deg)}92%,100%{transform:rotate(2100deg)}}
+@keyframes door{0%,32%{transform:scaleX(1)}36%,54%{transform:scaleX(.2)}58%,100%{transform:scaleX(1)}}
+@keyframes pax{0%,35%{opacity:0;transform:none}38%{opacity:1;transform:none}60%{opacity:1;transform:translateX(121px)}64%,100%{opacity:0;transform:translateX(121px)}}
+@keyframes bob{50%{transform:translateY(-1.5px)}}@keyframes pin{50%{transform:translateY(-5px)}}@keyframes lane{to{stroke-dashoffset:-26}}
+@media(prefers-reduced-motion:reduce){.scene *{animation:none!important}}
+
+/* ---- luxe glass pass ---- */
+.glass{background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.035) 38%,rgba(24,12,16,.5));backdrop-filter:blur(30px) saturate(1.7);-webkit-backdrop-filter:blur(30px) saturate(1.7);border:1px solid rgba(255,255,255,.13);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(0,0,0,.45),0 0 0 1px rgba(226,194,90,.1),0 40px 90px -20px #000}
+body::before{content:'';position:fixed;inset:0;z-index:300;pointer-events:none;background:radial-gradient(120% 90% at 50% 45%,transparent 45%,#000d)}
+#auth{overflow:hidden}#auth::before,#auth::after{content:'';position:absolute;border-radius:50%;filter:blur(90px);animation:drift 16s ease-in-out infinite alternate}
+#auth::before{width:560px;height:560px;background:#8b1e3f;left:6%;top:8%;opacity:.8}#auth::after{width:420px;height:420px;background:#d4af37;right:8%;bottom:6%;opacity:.4;animation-delay:-6s}
+@keyframes drift{to{transform:translate(90px,-60px) scale(1.15)}}
+#panel.c{border-color:rgba(255,255,255,.2);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -1px 0 rgba(0,0,0,.45),0 50px 120px -20px #000,0 0 90px #7a1f3d44}
+.pt,.card,.stats div,.seg label{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.09);box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
+button{font-size:12px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:#1a1205;border:1px solid rgba(255,235,170,.55);border-radius:14px;padding:14px 20px;background:linear-gradient(180deg,#f6e3a0,#d9b445 52%,#a9801f);box-shadow:inset 0 1px 0 #fff9,0 12px 28px -12px #e2c25aaa}
+button:hover{transform:translateY(-1px);filter:brightness(1.07)}
+button.s{background:rgba(255,255,255,.07);color:var(--t);border:1px solid rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.14)}
+button.d{background:linear-gradient(180deg,#c3335a,#7a1730);color:#fff;border:1px solid rgba(255,255,255,.2);box-shadow:inset 0 1px 0 #fff4,0 12px 28px -12px #a32749}
+input[type=text],input[type=email],input[type=password],input:not([type]){background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.12);box-shadow:inset 0 2px 8px #0008;transition:.2s}
+input:focus{border-color:rgba(226,194,90,.7);box-shadow:inset 0 2px 8px #0008,0 0 0 4px rgba(226,194,90,.14)}
+h3{color:var(--a);opacity:.85;font-size:11px;letter-spacing:3px}.m{letter-spacing:.2px}
+.st{font-size:24px;font-weight:600}.bar b{height:3px}.bar b.on{box-shadow:none}
+.big{background:linear-gradient(180deg,#fff,#e2c25a);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:600;letter-spacing:-1px}.big small{-webkit-text-fill-color:var(--m)}
+.i{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:7px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#2be38a;margin-right:8px;box-shadow:0 0 10px #2be38a}
+.tag{background:#a32749;color:#fff;border-radius:6px;padding:2px 7px;font-size:10px;letter-spacing:1px}
+.scene{box-shadow:0 14px 40px -10px #000}th{text-transform:uppercase;font-size:10px;letter-spacing:2px}tr:hover td{background:rgba(255,255,255,.04)}
+::-webkit-scrollbar{width:0}#panel>*{animation:up .55s both}#panel>*:nth-child(2){animation-delay:.05s}#panel>*:nth-child(3){animation-delay:.1s}#panel>*:nth-child(4){animation-delay:.15s}
+@keyframes up{from{opacity:0;transform:translateY(12px)}}
+#sheet{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px}#sheet[hidden]{display:none}
+#sheet .box{width:520px;max-width:100%;max-height:92vh;overflow:auto;padding:26px;border-radius:28px;display:flex;flex-direction:column;gap:12px}
+.av{flex:none;width:56px;height:56px;border-radius:50%;border:1px solid var(--a);display:flex;align-items:center;justify-content:center;font:600 24px 'Playfair Display',Georgia,serif;color:var(--a);background:rgba(226,194,90,.08)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}label.f{font-size:12px;color:var(--m);display:flex;flex-direction:column;gap:6px}
+details{border-bottom:1px solid var(--b);padding:10px 0}summary{cursor:pointer;font-weight:600}details p{margin-top:6px;color:var(--m);font-size:14px}
+textarea{width:100%;min-height:90px;padding:14px 16px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.28);color:var(--t);font:inherit;outline:0;resize:vertical}textarea:focus{border-color:rgba(226,194,90,.7)}
+.pad{flex-wrap:wrap}
+select{padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.28);color:var(--t);font:inherit}option{background:#0d1a38}
+.drv span{display:block;width:22px;height:22px;border-radius:50%;background:#f6f1e7;border:3px solid #e2c25a;box-shadow:0 0 0 6px rgba(226,194,90,.25)}.leaflet-marker-icon.drv{transition:transform 2.8s linear}
+
+/* ---- navy and gold pass ---- */
+:root{--ease:cubic-bezier(.22,1,.36,1)}
+*{-webkit-tap-highlight-color:transparent}button,a,summary{touch-action:manipulation}
+.glass{background:linear-gradient(135deg,rgba(255,255,255,.11),rgba(255,255,255,.03) 40%,rgba(8,18,44,.6));border:1px solid rgba(255,255,255,.12);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),inset 0 -1px 0 rgba(0,0,0,.35),0 0 0 1px rgba(226,194,90,.1),0 40px 90px -20px #020611}
+body::before{background:radial-gradient(120% 90% at 50% 45%,transparent 45%,rgba(2,6,17,.85))}
+.leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) saturate(.75) brightness(.82) contrast(.95)}
+#auth{background:radial-gradient(900px 560px at 12% 0%,rgba(30,64,140,.6),transparent),radial-gradient(700px 480px at 100% 100%,rgba(226,194,90,.14),transparent),#060d1f}
+#auth::before{background:#2a4fb0;opacity:.5}#auth::after{background:#d4af37;opacity:.3}
+#admin{background:radial-gradient(900px 500px at 80% -10%,rgba(30,64,140,.4),transparent),#060d1f}
+#panel.c{border-color:rgba(255,255,255,.2);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -1px 0 rgba(0,0,0,.35),0 50px 120px -20px #020611,0 0 90px rgba(42,79,176,.25)}
+input[type=text],input[type=email],input[type=password],input:not([type]),textarea,select{background:rgba(3,10,30,.45)}
+.pt,.card,.stats div,.seg label{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.09)}
+.pt,.card,td,.h span,h2,.st,summary{overflow-wrap:anywhere}
+/* motion: short ease-out, transform and opacity only */
+button{transition:transform .2s var(--ease),filter .2s var(--ease),box-shadow .2s var(--ease)}
+button:active{transform:scale(.97)}
+@media(hover:none){button:hover{transform:none;filter:none}}
+.bar b{transition:background .45s var(--ease),box-shadow .45s var(--ease)}
+#panel{animation:fadeIn .5s var(--ease) both}
+#panel>*{animation:up .45s var(--ease) both}
+#panel>*:nth-child(2){animation-delay:.04s}#panel>*:nth-child(3){animation-delay:.08s}#panel>*:nth-child(4){animation-delay:.12s}#panel>*:nth-child(5){animation-delay:.16s}#panel>*:nth-child(n+6){animation-delay:.2s}
+#sheet{animation:fadeIn .25s var(--ease) both}#sheet .box{animation:pop .35s var(--ease) both}
+#toast{transition:opacity .3s var(--ease),transform .3s var(--ease)}
+@keyframes fadeIn{from{opacity:0}}
+@keyframes up{from{opacity:0;transform:translateY(10px)}}
+@keyframes pop{from{opacity:0;transform:translateY(12px) scale(.98)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* phone fit */
+#top{top:calc(14px + env(safe-area-inset-top))}#panel{bottom:calc(16px + env(safe-area-inset-bottom))}
+@media(max-width:600px){#panel{bottom:calc(8px + env(safe-area-inset-bottom))}input,textarea,select{font-size:16px}}
+
+/* ---- car loader ---- */
+#load{position:fixed;inset:0;z-index:1000;background:var(--bg);display:flex;align-items:center;justify-content:center;transition:opacity .5s var(--ease)}#load.out{opacity:0;pointer-events:none}
+.lbox{display:flex;flex-direction:column;align-items:center;gap:16px}
+.road{position:relative;width:260px;height:54px;overflow:hidden}.road::before{content:'';position:absolute;left:0;right:0;bottom:3px;height:2px;background:var(--b)}
+.road::after{content:'';position:absolute;left:-26px;right:0;bottom:3px;height:2px;background:repeating-linear-gradient(90deg,var(--a) 0 14px,transparent 14px 26px);animation:dash .5s linear infinite;opacity:.8}
+.car2{position:absolute;bottom:6px;left:0;width:86px;animation:cruise 2.6s cubic-bezier(.45,0,.2,1) infinite}.car2 svg,.car3 svg{display:block;width:100%;height:auto}
+.lw{transform-box:fill-box;transform-origin:center;animation:spin2 .5s linear infinite}
+#busy{position:fixed;left:0;right:0;top:0;height:22px;z-index:900;pointer-events:none;overflow:hidden;opacity:0;transition:opacity .25s var(--ease)}#busy.on{opacity:1}
+#busy::after{content:'';position:absolute;left:0;right:0;bottom:2px;height:2px;background:var(--b)}
+.car3{position:absolute;bottom:3px;left:0;width:44px;animation:cross 1.8s cubic-bezier(.45,0,.2,1) infinite}
+#busy:not(.on) .car3,#busy:not(.on) .lw{animation-play-state:paused}
+@keyframes dash{to{transform:translateX(26px)}}@keyframes cruise{from{transform:translateX(-100px)}to{transform:translateX(280px)}}
+@keyframes cross{from{transform:translateX(-60px)}to{transform:translateX(100vw)}}@keyframes spin2{to{transform:rotate(360deg)}}
+/* ---- headline ---- */
+h1{background:none;-webkit-text-fill-color:currentColor;color:var(--t)}.gold{color:var(--a)}
+#panel.c h1{font-size:40px;line-height:1.05;letter-spacing:-1.2px}
+/* ---- light theme: cream, glass and gold ---- */
+:root[data-theme=light]{--bg:#ece6dc;--g:rgba(255,255,255,.62);--b:rgba(120,92,30,.22);--t:#1b1812;--m:#6d6556;--a:#946c1c;--a2:#c9a14a;color-scheme:light}
+[data-theme=light] .glass{background:linear-gradient(135deg,rgba(255,255,255,.8),rgba(255,255,255,.5));backdrop-filter:blur(26px) saturate(1.4);-webkit-backdrop-filter:blur(26px) saturate(1.4);border:1px solid rgba(255,255,255,.85);box-shadow:inset 0 1px 0 #fff,0 0 0 1px rgba(150,118,45,.14),0 30px 70px -25px rgba(90,60,10,.35)}
+[data-theme=light] #panel.c{border-color:rgba(255,255,255,.9);box-shadow:inset 0 1px 0 #fff,0 0 0 1px rgba(150,118,45,.16),0 50px 110px -30px rgba(90,60,10,.4)}
+[data-theme=light] .pt,[data-theme=light] .card,[data-theme=light] .stats div,[data-theme=light] .seg label{background:rgba(255,255,255,.62);border:1px solid rgba(120,92,30,.14);box-shadow:inset 0 1px 0 #fff}
+[data-theme=light] input[type=text],[data-theme=light] input[type=email],[data-theme=light] input[type=password],[data-theme=light] input:not([type]),[data-theme=light] textarea,[data-theme=light] select{background:rgba(255,255,255,.82);color:var(--t);border:1px solid rgba(90,70,30,.18);box-shadow:inset 0 1px 3px rgba(90,60,10,.08)}
+[data-theme=light] ::placeholder{color:#8a8070}
+[data-theme=light] button.s{background:rgba(255,255,255,.75);color:var(--t);border:1px solid rgba(90,70,30,.18);box-shadow:inset 0 1px 0 #fff}
+[data-theme=light] .big{background:linear-gradient(180deg,#1b1812,#8a6a1e);-webkit-background-clip:text;background-clip:text}
+[data-theme=light] .bar b{background:rgba(90,70,30,.15)}[data-theme=light] tr:hover td{background:rgba(0,0,0,.04)}
+[data-theme=light] #toast{background:#fffaf0;color:var(--t);border-color:rgba(90,70,30,.2)}[data-theme=light] option{background:#fffaf0}
+[data-theme=light] #sheet{background:rgba(236,230,220,.6)}
+[data-theme=light] #auth{background:radial-gradient(900px 560px at 10% 0%,rgba(226,194,90,.38),transparent),radial-gradient(700px 480px at 100% 100%,rgba(255,255,255,.85),transparent),#ece6dc}
+[data-theme=light] #auth::before{background:#e8c878;opacity:.5}[data-theme=light] #auth::after{background:#fff;opacity:.7}
+[data-theme=light] #admin{background:radial-gradient(900px 500px at 80% -10%,rgba(226,194,90,.28),transparent),#ece6dc}
+[data-theme=light] #map,[data-theme=light] .leaflet-container{background:#e9e1d1}
+[data-theme=light] .leaflet-tile-pane{filter:sepia(.22) saturate(.85) brightness(1.03) contrast(.98)}
+[data-theme=light] body::before{background:radial-gradient(120% 90% at 50% 45%,transparent 50%,rgba(236,230,220,.65))}
+[data-theme=light] .scene stop[stop-color="#10265a"]{stop-color:#fbf2de}[data-theme=light] .scene stop[stop-color="#050b1c"]{stop-color:#e8d7b0}
+[data-theme=light] .scene g[fill="#0b1a3d"]{fill:#d8c39b}[data-theme=light] .scene rect[fill="#0f2150"]{fill:#cdb283}[data-theme=light] .scene g[fill="#e2c25a"]{fill:#fff4d6}
+[data-theme=light] .scene rect[fill="#16254d"]{fill:#dccdac}[data-theme=light] .scene rect[fill="#070e22"]{fill:#4b4338}[data-theme=light] .scene [fill="#050b1c"]{fill:#2b2418}
+[hidden]{display:none!important}
+/* ---- full-page login ---- */
+:root{--sk1:#060d1f;--sk2:#16347a;--kbb:#0d2150;--kdd:#16306b;--kww:#f3d98a;--kss:#16254d;--krr:#070e22;--ksu:#f6e08f;--kcc:rgba(255,255,255,.1)}
+:root[data-theme=light]{--sk1:#fbf2de;--sk2:#ecd7a8;--kbb:#e0cb9f;--kdd:#cdb283;--kww:#fff4d6;--kss:#dccdac;--krr:#4b4338;--ksu:#f0c75e;--kcc:rgba(255,255,255,.9)}
+.kb{fill:var(--kbb)}.kd{fill:var(--kdd)}.kw{fill:var(--kww);opacity:.6}.ks{fill:var(--kss)}.kr{fill:var(--krr)}.ku{fill:var(--ksu)}.kc{fill:var(--kcc)}
+.kt{animation:twk2 5s ease-in-out infinite}.kcl{animation:drift 120s linear infinite}.ku.halo{transform-box:fill-box;transform-origin:center;animation:halo 5s ease-in-out infinite}
+.carb{animation:carb 18s linear infinite}.kstar{fill:#fff;opacity:0}:root[data-theme=dark] .kstar{opacity:.25;animation:twk 3.2s ease-in-out infinite}
+@keyframes drift{from{transform:translateX(-260px)}to{transform:translateX(980px)}}
+@keyframes halo{from{opacity:.35;transform:scale(1)}to{opacity:0;transform:scale(1.9)}}
+@keyframes twk{50%{opacity:.9}}@keyframes twk2{50%{opacity:.15}}
+@keyframes carb{from{transform:translateX(-300px)}to{transform:translateX(760px)}}
+@keyframes rise{from{opacity:0;transform:translateY(26px)}}
+#auth{overflow-y:auto;overflow-x:hidden}
+.split{position:relative;z-index:1;display:grid;grid-template-columns:1.25fr 1fr;height:100%}
+.hero{position:relative;overflow:hidden;background:linear-gradient(180deg,var(--sk1),var(--sk2))}
+.ht{position:relative;z-index:2;padding:clamp(84px,12vh,130px) clamp(24px,5vw,72px) 0}
+.hero h1{font-size:clamp(38px,5.2vw,80px);line-height:1.02;letter-spacing:-.03em}
+.lead{color:var(--m);font-size:clamp(15px,1.3vw,19px);max-width:30em;margin-top:18px}
+.hf{display:grid;gap:16px;margin-top:30px;max-width:30em}.hf>div{display:flex;gap:14px;align-items:flex-start}.hf .i{width:22px;height:22px;margin:3px 0 0;flex:none;stroke:var(--a)}.hf small{color:var(--m);font-size:13px}
+.sbx{position:absolute;inset:0;z-index:1}.sbx svg{display:block;width:100%;height:100%}
+.fp{display:flex;flex-direction:column;justify-content:center;border-radius:0;border-width:0 0 0 1px;overflow:auto;padding:clamp(24px,5vw,72px)}
+.fi{width:100%;max-width:420px;margin:auto;display:flex;flex-direction:column;gap:14px}
+.fi h2{font-size:clamp(30px,3vw,44px);line-height:1.05;letter-spacing:-.02em}
+.fp input[type=text],.fp input[type=email],.fp input[type=password],.fp input:not([type]){padding:16px 18px;font-size:16px}
+.ht h1{animation:rise .9s var(--ease) .05s both}.lead{animation:rise .9s var(--ease) .18s both}
+.hf>div{animation:rise .8s var(--ease) both}.hf>div:nth-child(1){animation-delay:.3s}.hf>div:nth-child(2){animation-delay:.4s}.hf>div:nth-child(3){animation-delay:.5s}
+.sbx{animation:fadeIn 1.4s var(--ease) both}.fi>*{animation:rise .8s var(--ease) both}.fi>:nth-child(2){animation-delay:.08s}.fi>:nth-child(3){animation-delay:.14s}.fi>:nth-child(4){animation-delay:.2s}.fi>:nth-child(n+5){animation-delay:.26s}
+@media(max-width:900px){.split{grid-template-columns:1fr;grid-template-rows:minmax(430px,58vh) auto;height:auto;min-height:100%}.fp{border-width:1px 0 0}.ht{padding-top:84px}.hero h1{font-size:clamp(34px,9.5vw,54px)}.lead,.hf{display:none}}
+@media(max-height:720px) and (min-width:901px){.hf{display:none}}
+/* ---- site features ---- */
+.skip{position:fixed;left:12px;top:-60px;z-index:2000;padding:10px 16px;border-radius:12px;background:#fffaf0;color:#1b1812;border:2px solid var(--a);transition:top .2s var(--ease)}.skip:focus{top:12px}
+#prog{position:fixed;left:0;top:0;height:3px;width:100%;background:linear-gradient(90deg,var(--a2),var(--a));transform-origin:left;transform:scaleX(0);z-index:950;pointer-events:none}
+:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+a:hover{text-decoration:underline}summary:hover{color:var(--a)}.card,.pt{transition:border-color .2s var(--ease)}.card:hover{border-color:rgba(226,194,90,.5)}button.s:hover{border-color:var(--a)}
+input:hover,textarea:hover,select:hover{border-color:rgba(226,194,90,.45)}
+.err{border-color:#d1405f!important;box-shadow:0 0 0 3px rgba(209,64,95,.15)!important}.ferr{color:#d1405f;font-size:13px;margin-top:6px}.ferr:empty{display:none}.okmsg{color:#2f9e6a;font-size:13px}
+.pw{position:relative}.pw input{padding-right:84px!important}.tg{position:absolute;right:8px;top:8px;bottom:8px;padding:0 14px!important;font-size:11px!important}
+.done{display:flex;flex-direction:column;gap:10px;align-items:flex-start}.chk{width:44px;height:44px;color:var(--a);display:block}.chk path{stroke-dasharray:30;stroke-dashoffset:30;animation:draw .7s .15s var(--ease) forwards}@keyframes draw{to{stroke-dashoffset:0}}
+.h button{padding:6px 12px;font-size:11px}
+.nav{position:relative}.mi{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.mb{display:none}.who{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px}
+details.est{border:1px solid var(--b);border-radius:16px;padding:12px 14px}details.est .row2{margin:10px 0}details.est button{margin-bottom:8px}
+#ck{position:fixed;left:0;right:0;margin:0 auto;bottom:calc(16px + env(safe-area-inset-bottom));width:calc(100% - 32px);max-width:560px;z-index:950;padding:16px 18px;display:flex;gap:14px;align-items:center;border-radius:20px}#ck p{margin:0;font-size:13px;flex:1}
+#fab{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:700}
+#totop{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:700}
+#cf{position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px;animation:fadeIn .25s var(--ease) both}
+#cf .box{width:420px;max-width:100%;padding:26px;border-radius:28px;display:flex;flex-direction:column;gap:12px;animation:pop .35s var(--ease) both}[data-theme=light] #cf{background:rgba(236,230,220,.6)}
+@media(max-width:700px){.mb{display:inline-block}.mi{display:none;position:absolute;top:calc(100% + 8px);right:0;flex-direction:column;align-items:stretch;padding:12px;border-radius:18px;min-width:190px;background:rgba(10,20,45,.97);border:1px solid var(--b);box-shadow:0 20px 50px -10px #000}.mi.open{display:flex}[data-theme=light] .mi{background:#fffaf0;box-shadow:0 20px 50px -20px rgba(90,60,10,.5)}.who{max-width:110px}}
+@media(max-width:900px){#fab{display:none}}
+@media(prefers-reduced-motion:reduce){.chk path{stroke-dashoffset:0!important}}
+@media print{#fab,#totop,#prog,#ck,#top,.skip,#busy,#load,#map,#cf{display:none!important}body.ps>*:not(#sheet){display:none!important}body.ps #sheet{position:static!important;background:none!important;backdrop-filter:none!important;padding:0!important;display:block!important}body.ps #sheet .box{width:auto!important;max-height:none!important;box-shadow:none!important;border:0!important;background:#fff!important;color:#000!important}body.ps #sheet .box *{color:#000!important;-webkit-text-fill-color:#000!important;background:none!important}body.ps #sheet .seg,body.ps #sheet button,body.ps #dm{display:none!important}}
+</style>
+
+</head><body>
+<a class="skip" href="#" onclick="skipTo(event)">Skip to content</a><div id="prog"></div>
+<div id="auth" hidden></div>
+<div id="map"></div><div id="admin" hidden></div><header id="top"></header><main id="panel" class="glass"></main><div id="ck" class="glass" hidden role="dialog" aria-label="Storage notice"><p>Velo sets no cookies and shows no ads. Your browser keeps your login for this tab and your theme choice. <a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a></p><button onclick="okCk()">Got it</button></div>
+<button id="fab" onclick="help('contact')">Contact support</button><button id="totop" class="s" hidden onclick="toTop()">Back to top</button><div id="cf" hidden></div>
+<div id="toast"></div>
+<div id="load" role="status" aria-label="Loading"><div class="lbox"><div class="logo">vel<i>o</i></div><div class="road"><div class="car2"><svg viewBox="0 0 110 44" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="cg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6e08f"/><stop offset=".55" stop-color="#d4af37"/><stop offset="1" stop-color="#8a6a1e"/></linearGradient></defs><path d="M4 30V22Q4 17 11 15L28 11Q36 2 50 2H76Q88 2 94 14L104 18Q109 20 109 26V30Z" fill="url(#cg1)"/><path d="M33 12Q38 5 48 5H58V15ZM64 5H76Q83 5 87 14L64 15Z" fill="#2b2418"/><rect x="103" y="21" width="6" height="4" rx="2" fill="#fff"/><rect x="4" y="21" width="4" height="6" fill="#a32749"/><g class="lw"><circle cx="28" cy="31" r="9" fill="#2b2418" stroke="#f6e08f" stroke-width="1.5"/><path d="M28 24V38M21 31H35" stroke="#d4af37" stroke-width="1.5"/></g><g class="lw"><circle cx="84" cy="31" r="9" fill="#2b2418" stroke="#f6e08f" stroke-width="1.5"/><path d="M84 24V38M77 31H91" stroke="#d4af37" stroke-width="1.5"/></g></svg></div></div><p class="m">Loading</p></div></div>
+<div id="busy" aria-hidden="true"><div class="car3"><svg viewBox="0 0 110 44" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="cg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6e08f"/><stop offset=".55" stop-color="#d4af37"/><stop offset="1" stop-color="#8a6a1e"/></linearGradient></defs><path d="M4 30V22Q4 17 11 15L28 11Q36 2 50 2H76Q88 2 94 14L104 18Q109 20 109 26V30Z" fill="url(#cg2)"/><path d="M33 12Q38 5 48 5H58V15ZM64 5H76Q83 5 87 14L64 15Z" fill="#2b2418"/><rect x="103" y="21" width="6" height="4" rx="2" fill="#fff"/><rect x="4" y="21" width="4" height="6" fill="#a32749"/><g class="lw"><circle cx="28" cy="31" r="9" fill="#2b2418" stroke="#f6e08f" stroke-width="1.5"/><path d="M28 24V38M21 31H35" stroke="#d4af37" stroke-width="1.5"/></g><g class="lw"><circle cx="84" cy="31" r="9" fill="#2b2418" stroke="#f6e08f" stroke-width="1.5"/><path d="M84 24V38M77 31H91" stroke="#d4af37" stroke-width="1.5"/></g></svg></div></div><div id="sheet" hidden></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"'`]/g,c=>'&#'+c.charCodeAt(0)+';');
+const ic=d=>`<svg class=i viewBox="0 0 24 24">${d}</svg>`,IC={sos:ic('<path d="M12 3 2 21h20z"/><path d="M12 10v5M12 18v.01"/>'),car:ic('<path d="M5 16l1.5-5a2 2 0 0 1 2-1.5h7a2 2 0 0 1 2 1.5L19 16M4 16h16v3H4zM7 19v1.5M17 19v1.5"/>'),pin:ic('<path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>')};
+const star=(r,c)=>c>0?'★ '+Number(r).toFixed(1):'New';
+let T=sessionStorage.t,U=JSON.parse(sessionStorage.u||'null'),S={mode:'pick',pick:null,drop:null,est:null,mine:[],act:null,drv:null,reqs:[],stat:null,me:null,skip:new Set(),prev:{},reqN:undefined,demo:true,otp:null,earn:null,lastKey:''},ws,subs={},sig='',rc={};
+const A=['REQUESTED','ACCEPTED','ARRIVED','STARTED'],ORD=[...A,'COMPLETED'],LAB={REQUESTED:'Finding your driver…',ACCEPTED:'Driver is on the way',ARRIVED:'Your driver has arrived',STARTED:'Enjoy the ride',COMPLETED:'You have arrived'};
+const map=L.map('map',{zoomControl:false}).setView([20.2961,85.8245],12),lay=L.layerGroup().addTo(map);
+let DM=null;
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:19}).addTo(map);
+const dot=(p,c,r=9)=>L.circleMarker(p,{radius:r,color:'#fff',weight:2,fillColor:c,fillOpacity:1}).addTo(lay);
+function toast(m,ms=3200){const t=$('#toast');t.textContent=m;t.className='show';clearTimeout(t.k);t.k=setTimeout(()=>t.className='',ms)}
+let busyN=0,busyT=null;
+async function api(p,m='GET',b){const loud=m!='GET';if(loud){busyN++;clearTimeout(busyT);busyT=setTimeout(()=>$('#busy').classList.add('on'),350)}
+ try{return await api0(p,m,b)}finally{if(loud&&--busyN<=0){busyN=0;clearTimeout(busyT);$('#busy').classList.remove('on')}}}
+async function api0(p,m='GET',b){const r=await fetch('/api'+p,{method:m,headers:{'Content-Type':'application/json',...(T?{Authorization:'Bearer '+T}:{})},body:b?JSON.stringify(b):undefined});
+ const j=await r.json().catch(()=>({}));if(r.status==401&&T&&!p.startsWith('/auth'))logout();if(!r.ok)throw new Error(j.error||'Request failed');return j}
+const act=(p,m='POST',b)=>api(p,m,b).then(()=>tick()).catch(e=>toast(e.message));
+const P=h=>{$('#panel').className='glass';$('#panel').innerHTML=h};
+function logout(){sessionStorage.clear();location.reload()}
+// ---------- auth ----------
+function sceneSVG(){const rn=i=>((i*9301+49297)%233280)/233280;
+ let o='<svg viewBox="0 0 700 760" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="gd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6e08f"/><stop offset=".55" stop-color="#d4af37"/><stop offset="1" stop-color="#8a6a1e"/></linearGradient><linearGradient id="bm" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>';
+ for(let i=0;i<22;i++)o+=`<circle class=kstar cx=${Math.round(rn(i+1)*700)} cy=${Math.round(rn(i+30)*300)} r=${(1+rn(i+60)*1.4).toFixed(1)} style="animation-delay:${(rn(i+90)*3).toFixed(1)}s"/>`;
+ o+='<circle class="ku halo" cx=540 cy=150 r=46 /><circle class=ku cx=540 cy=150 r=46 />';
+ [[90,1,95,-10],[190,.8,120,-60],[60,1.2,150,-100]].forEach(c=>o+=`<g transform="translate(0 ${c[0]}) scale(${c[1]})"><g class=kcl style="animation-duration:${c[2]}s;animation-delay:${c[3]}s"><ellipse class=kc cx=0 cy=0 rx=50 ry=16 /><ellipse class=kc cx=40 cy=-8 rx=36 ry=14 /><ellipse class=kc cx=-38 cy=-6 rx=30 ry=12 /></g></g>`);
+ [[-10,80,200],[60,70,240],[125,90,170],[210,70,220],[275,80,160],[350,60,210],[540,80,230],[615,90,180]].forEach((b,k)=>{const[x,w,h]=b;o+=`<rect class=kb x=${x} y=${703-h} width=${w} height=${h} />`;
+  for(let c=0;c<Math.floor((w-14)/16);c++)for(let r=0;r<Math.min(7,Math.floor((h-18)/24));r++){const i=k*50+c*7+r,t=i%3==0;o+=`<rect class="kw${t?' kt':''}" x=${x+9+c*16} y=${703-h+12+r*24} width=8 height=11${t?` style="animation-delay:${(rn(i)*5).toFixed(1)}s"`:''} />`}});
+ o+='<rect class=kd x=400 y=453 width=120 height=250 stroke="#e2c25a" stroke-opacity=".45" />';
+ for(let c=0;c<4;c++)for(let r=0;r<5;r++)o+=`<rect class=kw x=${412+c*26} y=${470+r*34} width=12 height=16 />`;
+ o+='<rect x=428 y=665 width=24 height=38 fill="#e2c25a" /><g class=pin><path d="M440 410c-9 0-15 6-15 14 0 10 15 24 15 24s15-14 15-24c0-8-6-14-15-14z" fill="#a32749" stroke="#f6e08f" stroke-width="1.5"/><circle cx=440 cy=424 r=5 fill="#f6e08f"/></g>';
+ o+='<rect class=ks y=703 width=700 height=16 /><rect class=kr y=719 width=700 height=41 /><line class=lane x1=0 y1=741 x2=700 y2=741 stroke="#e2c25a" stroke-width=3 stroke-dasharray="14 12" opacity=".7" />';
+ const body='M90 140V130Q90 124 98 122L116 118Q124 104 138 102H168Q180 102 186 114L196 120Q202 124 202 132V140Z',win='M122 116Q128 107 138 106H148V118ZM154 106H168Q176 106 180 117L154 118Z';
+ const wheel=(x,c)=>`<g class="${c}"><circle cx=${x} cy=142 r=9 fill="#2b2418" stroke="#f6e08f" stroke-width="1.5"/><path d="M${x} 135V149M${x-7} 142H${x+7}" stroke="#d4af37" stroke-width="1.5"/></g>`;
+ o+=`<g transform="translate(700 572) scale(-1.1 1.1)"><g class=carb><path d="${body}" fill="#f6f1e7"/><path d="${win}" fill="#2b2418"/>${wheel(112,'')}${wheel(180,'')}</g></g>`;
+ o+=`<g transform="translate(6 505) scale(1.6)"><g class=car><path d="M202 128L262 116V144Z" fill="url(#bm)"/><ellipse cx=146 cy=153 rx=60 ry=3 fill="#000" opacity=".5"/><path d="${body}" fill="url(#gd)"/><path d="${win}" fill="#2b2418"/><rect x=142 y=120 width=24 height=18 rx=3 fill="#2b2418"/><rect class=door x=142 y=120 width=24 height=18 rx=3 fill="#8a6a1e"/><rect x=196 y=126 width=6 height=4 rx=2 fill="#fff"/><rect x=90 y=126 width=4 height=6 rx=1 fill="#a32749"/>${wheel(112,'wh')}${wheel(180,'wh')}</g>`;
+ o+='<g transform="translate(150 0)"><g class=pax><g class=bob><circle cx=0 cy=101 r=5.5 fill="#f1d9b5"/><path d="M-5.5 101a5.5 5.5 0 0 1 11 0z" fill="#1a0e0a"/><path d="M-6 107h12l1 18h-14z" fill="#6f8fd1"/><rect x=-5 y=124 width=4 height=9 fill="#f6f1e7"/><rect x=1 y=124 width=4 height=9 fill="#f6f1e7"/><rect x=7 y=118 width=9 height=11 rx=1.5 fill="url(#gd)"/></g></g></g></g></svg>';
+ return o}
+function authView(reg){$('#panel').hidden=true;const a=$('#auth');a.hidden=false;
+ const HF=[[ic('<path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>'),'Live tracking','Watch your driver move on the map and see the arrival time.'],[ic('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'),'Trip code','The ride starts only when the driver enters your 4-digit code.'],[ic('<path d="M5 4h14v17l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 9h6M9 13h6"/>'),'Fare shown first','See the price before you book. Pay after the trip.']];
+ a.innerHTML=`<div class=split><section class=hero><div class=ht><h1>Book a cab.<br><span class=gold>Follow it live.</span></h1><p class=lead>Riders book and track trips on a live map. Drivers accept requests and see what they earn on every trip.</p><div class=hf>${HF.map(f=>`<div>${f[0]}<span><b>${f[1]}</b><br><small>${f[2]}</small></span></div>`).join('')}</div></div><div class=sbx>${sceneSVG()}</div></section>
+ <aside class="fp glass"><div class=fi id=fi><h2>${reg?'Create your <span class=gold>account</span>':'Welcome <span class=gold>back</span>'}</h2><p class=m>${reg?'Choose Rider to book trips, or Driver to accept them.':'Log in to book or accept rides.'}</p>
+ ${reg?'<div><input id=n placeholder="Full name" maxlength=60 autocomplete=name><div class=ferr id=E_n role=alert></div></div>':''}
+ <div><input id=e type=email placeholder="Email" autocomplete=email><div class=ferr id=E_e role=alert></div></div>
+ <div>${pw('p','Password (8+ characters)',reg?'new-password':'current-password')}<div class=ferr id=E_p role=alert></div></div>
+ ${reg?'<div class=seg><label><input type=radio name=r value=RIDER checked> Rider</label><label><input type=radio name=r value=DRIVER> Driver</label></div><p class=m>By creating an account you agree to the <a href=/terms.html target=_blank rel=noopener>Terms</a> and <a href=/privacy.html target=_blank rel=noopener>Privacy Policy</a>.</p>':''}
+ <div class=ferr id=E_form role=alert></div><button id=go>${reg?'Create account':'Log in'}</button><p class=m><a id=sw>${reg?'Have an account? Log in':'New here? Create an account'}</a></p>
+ ${reg?'':'<details class=est><summary>Check a fare before you sign up</summary><div class=row2><input id=ef placeholder="From (place name)" maxlength=100><input id=et placeholder="To (place name)" maxlength=100></div><button type=button class=s id=eb>Estimate</button><div id=eo class=m role=status></div></details>'}
+ <p class=m><a href=/privacy.html target=_blank rel=noopener>Privacy</a> · <a href=/terms.html target=_blank rel=noopener>Terms</a> · <a id=hl>Help</a></p><p class=m>Privacy Policy and Terms last updated October 17, 2026.</p></div></aside></div>`;
+ $('#sw').onclick=()=>authView(!reg);$('#hl').onclick=()=>help();if(!reg)$('#eb').onclick=fareDemo;
+ a.querySelectorAll('input').forEach(i=>{i.addEventListener('keydown',e=>{if(e.key=='Enter')$('#go').click()});i.addEventListener('input',()=>{setErr(i.id,'');setErr('form','')})});
+ $('#go').onclick=()=>authSubmit(reg)}
+// ---------- map helpers ----------
+const nm=async(la,ln)=>{const f=la.toFixed(4)+', '+ln.toFixed(4);try{const j=await(await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${la}&lon=${ln}`)).json();return(j.display_name||'').split(',').slice(0,2).join(',')||f}catch{return f}};
+async function rt(a,b){const k=a+'|'+b;if(rc[k])return rc[k];try{const j=await(await fetch(`https://router.project-osrm.org/route/v1/driving/${a[1]},${a[0]};${b[1]},${b[0]}?overview=full&geometries=geojson`)).json();return rc[k]=j.routes[0].geometry.coordinates.map(c=>[c[1],c[0]])}catch{return[a,b]}}
+async function draw(){let a,b;if(S.act){a=[S.act.pLat,S.act.pLng];b=[S.act.dLat,S.act.dLng]}else if(U.role=='RIDER'){a=S.pick;b=S.drop}
+ const line=a&&b?await rt(a,b):null;lay.clearLayers();if(line)L.polyline(line,{color:theme()=='light'?'#946c1c':'#e2c25a',weight:5,opacity:.85}).addTo(lay);
+ if(a)dot(a,'#e2c25a');if(b)dot(b,'#a32749');if(U.role=='DRIVER')S.reqs.forEach(r=>dot([r.pLat,r.pLng],'#f3dc8a'));
+ const cp=U.role=='DRIVER'?S.me:(S.drv&&S.drv.lat?[S.drv.lat,S.drv.lng]:null);
+ if(cp){if(!DM)DM=L.marker(cp,{icon:L.divIcon({className:'drv',html:'<span></span>',iconSize:[22,22]}),interactive:false}).addTo(map);else DM.setLatLng(cp)}else if(DM){DM.remove();DM=null}
+ if(!S.act)S.lastKey='';const key=S.act?S.act.id+S.act.status:'';
+ if(key&&key!=S.lastKey&&cp){S.lastKey=key;map.fitBounds([cp,S.act.status=='STARTED'?[S.act.dLat,S.act.dLng]:[S.act.pLat,S.act.pLng]],{padding:[110,110],maxZoom:16})}}
+function setPt(p,n){S[S.mode]=p;S[S.mode+'N']=n;if(S.mode=='pick')S.mode='drop';est()}
+async function est(){S.est=null;if(S.pick&&S.drop){try{S.est=await api('/rides/estimate','POST',{pLat:S.pick[0],pLng:S.pick[1],dLat:S.drop[0],dLng:S.drop[1]});map.fitBounds([S.pick,S.drop],{padding:[100,100]})}catch(e){toast(e.message)}}render();draw()}
+async function search(q){try{const j=await(await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(q))).json();if(!j[0])return toast('Place not found');const p=[+j[0].lat,+j[0].lon];map.setView(p,14);setPt(p,j[0].display_name.split(',').slice(0,2).join(','))}catch{toast('Search unavailable')}}
+map.on('click',async e=>{if(!U||S.act)return;const p=[e.latlng.lat,e.latlng.lng];if(U.role=='RIDER')setPt(p,await nm(...p));if(U.role=='DRIVER'){S.me=p;api('/driver/status','POST',{lat:p[0],lng:p[1]}).then(draw).catch(e=>toast(e.message))}});
+// ---------- rider ----------
+function ride(a){return`<div class=m>Ride #${a.id} · ${fmt(a.created)}</div>${a.status=='COMPLETED'?CHK:''}<div class=st>${LAB[a.status]}</div><div class=bar>${ORD.map((s,i)=>`<b class="${i<=ORD.indexOf(a.status)?'on':''}"></b>`).join('')}</div><div class=pt><i style=background:#e2c25a></i>${esc(a.pickup)}</div><div class=pt><i style=background:#a32749></i>${esc(a.drop)}</div><div class=big>₹${a.fare}<small>${a.distanceKm} km</small></div>${a.status=='COMPLETED'?`<div class=h><span>${a.paid?'Paid':'Amount due'}</span><span>₹${a.fare}</span></div>`:''}`}
+const hist=()=>S.mine.length?'<h3>Recent rides</h3>'+S.mine.slice(0,4).map(r=>`<div class=h><span>${esc(r.drop)}</span><span>${fmt(r.created)} · ${U.role=='DRIVER'&&r.status=='COMPLETED'?'You earn ₹'+r.earning+(r.paid?' (paid)':' (awaiting payment)'):'₹'+r.fare+' · '+r.status}</span>${U.role=='RIDER'&&r.status=='COMPLETED'&&r.paid?`<button class=s onclick="receipt(${Number(r.id)})">Receipt</button>`:''}</div>`).join(''):'';
+function rider(){const a=S.act;
+ if(a){let b;if(a.status=='COMPLETED')b=!a.paid?`<button onclick="act('/rides/${a.id}/pay')">Pay ₹${a.fare}</button>`:`<p class=m style="width:100%">Rate your driver</p>${[1,2,3,4,5].map(n=>`<button class=s onclick="act('/rides/${a.id}/rate','POST',{rating:${n}})">${n}★</button>`).join('')}<button class=s onclick="receipt(${a.id})">Receipt</button><button class=s onclick="S.skip.add(${a.id});tick()">Skip</button>`;
+  else b=(a.status!='STARTED'?`<button class=d onclick="askCancel(${a.id})">Cancel</button>`:'')+(a.status!='REQUESTED'?`<button class=s onclick="askSos(${a.id})">${IC.sos}SOS</button>`:'')+(S.drv?`<button class=s onclick=copyTrip()>Copy trip details</button>`:'');
+  return P(ride(a)+etaTxt(a)+otpBox(a)+(S.drv?`<div class=card><div>${IC.car}${esc(S.drv.name)} · ${star(S.drv.rating,S.drv.count)}</div><div class=m>${esc([S.drv.color,S.drv.vehicle].filter(Boolean).join(' '))}${S.drv.plate?' · '+esc(S.drv.plate):''}</div></div>`:'')+`<div class=seg>${b}</div>`)}
+ P(`<h2>Where to?</h2><div class=seg><button class="${S.mode=='pick'?'':'s'}" onclick="S.mode='pick';render()">Pickup</button><button class="${S.mode=='drop'?'':'s'}" onclick="S.mode='drop';render()">Drop</button></div><input id=q placeholder="Search a place, press Enter" onkeydown="if(event.key=='Enter')search(this.value)"><div class=pt><i style=background:#e2c25a></i>${esc(S.pickN||'Pickup: tap the map or search')}</div><div class=pt><i style=background:#a32749></i>${esc(S.dropN||'Drop: tap the map or search')}</div>${S.est?`<div class=big>₹${S.est.fare}<small>${S.est.distanceKm} km · ~${S.est.etaMin} min</small></div><button onclick=book()>Book ride</button>`:''}${hist()}`)}
+function book(){const[p,d]=[S.pick,S.drop];api('/rides','POST',{pickup:S.pickN,drop:S.dropN,pLat:p[0],pLng:p[1],dLat:d[0],dLng:d[1]}).then(()=>{S.pick=S.drop=S.est=null;S.mode='pick';tick()}).catch(e=>toast(e.message))}
+const sos=id=>api('/rides/'+id+'/sos','POST').then(()=>toast('SOS sent to admin')).catch(e=>toast(e.message));
+// ---------- driver ----------
+function driver(){const a=S.act,s=S.stat||{};const NX={ACCEPTED:'I have arrived',ARRIVED:'Start trip',STARTED:'Complete trip'};
+ let h=`<div class=stats><div><small>Earnings</small><b>₹${s.earnings||0}</b></div><div><small>Trips</small><b>${s.trips||0}</b></div><div><small>Rating</small><b>${star(s.rating,s.ratingCount)}</b></div></div>`;
+ if(a)h+=ride(a)+(S.rider?`<div class=card>Rider: ${esc(S.rider.name)}</div>`:'')+(S.earn!=null?`<div class=card><div class=h><span>You earn</span><b>₹${S.earn}</b></div><div class=m>from the ₹${a.fare} fare, once the rider has paid</div></div>`:'')+`<div class=seg>${a.status=='ARRIVED'?`<input id=otp inputmode=numeric maxlength=4 placeholder="4-digit code from rider"><button onclick="startTrip(${a.id})">Start trip</button>`:`<button onclick="act('/rides/${a.id}/advance')">${NX[a.status]}</button>`}${a.status!='STARTED'?`<button class=d onclick="askCancel(${a.id})">Cancel</button>`:''}<button class=s onclick="askSos(${a.id})">${IC.sos}SOS</button></div><div class=seg><button class=s onclick=toggleDemo()>${S.demo?'Switch to real GPS':'Switch to demo drive'}</button></div><p class=m>${S.demo?'Demo drive moves your car toward the target by itself.':'Your GPS position is shared with the rider.'}</p>`;
+ else h+=`<div class=seg><button class="${s.available?'':'s'}" onclick=toggle()>${s.available?'<span class=dot></span>Online':'Go online'}</button><button class=s onclick=gps()>${IC.pin}Use GPS</button></div><p class=m>Tap the map to set your location. Ride requests within 20 km appear here.</p><div class=seg><button class=s onclick=toggleDemo()>${S.demo?'Switch to real GPS':'Switch to demo drive'}</button></div>`+(S.reqs.length?S.reqs.map(r=>`<div class=card><div>${esc(r.pickup)} → ${esc(r.drop)}</div><div class=h><span>₹${r.fare} · ${r.distanceKm} km</span></div><button onclick="act('/rides/${Number(r.id)}/accept')">Accept ride</button></div>`).join(''):s.available?'<div class=card>Waiting for requests…</div>':'')+hist();
+ P(h)}
+function toggle(){if(!S.me)return toast('Set your location first (tap map or GPS)');api('/driver/status','POST',{lat:S.me[0],lng:S.me[1],available:!S.stat.available}).then(tick).catch(e=>toast(e.message))}
+function gps(){navigator.geolocation?.getCurrentPosition(p=>{S.me=[p.coords.latitude,p.coords.longitude];map.setView(S.me,14);api('/driver/status','POST',{lat:S.me[0],lng:S.me[1]}).then(draw)},()=>toast('GPS unavailable'))}
+async function simulate(){const a=S.act;if(!S.me||!['ACCEPTED','STARTED'].includes(a.status))return;const t=a.status=='STARTED'?[a.dLat,a.dLng]:[a.pLat,a.pLng];
+ S.me=[S.me[0]+(t[0]-S.me[0])*.25,S.me[1]+(t[1]-S.me[1])*.25];await api('/driver/status','POST',{lat:S.me[0],lng:S.me[1]})}
+// ---------- admin ----------
+const AF={u:'',r:'',s:'ALL'};let D={us:[],rs:[]};
+const csv=v=>{v=String(v??'');if(/^[=+\-@\t\r]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'};
+function exportCsv(){const h=['id','created','rider','rider_phone','driver','driver_phone','pickup','drop','km','fare','driver_gets','platform_profit','status','paid','rating'];
+ const rows=D.rs.map(r=>[r.id,r.created,r.riderName,r.riderPhone,r.driverName,r.driverPhone,r.pickup,r.drop,r.distanceKm,r.fare,r.earning??'',r.profit??'',r.status,r.paid?'yes':'no',r.rating??''].map(csv).join(','));
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([h.join(',')+'\n'+rows.join('\n')],{type:'text/csv'}));a.download='velo-rides.csv';a.click();URL.revokeObjectURL(a.href)}
+function usersTbl(){const q=AF.u.toLowerCase(),L=D.us.filter(u=>!q||(u.name+' '+u.email+' '+(u.phone||'')+' '+u.role).toLowerCase().includes(q));
+ return`<table><tr><th>Name<th>Email<th>Phone<th>Role<th>Vehicle<th>Rating<th>Joined<th>Source<th>Status<th></tr>${L.map(u=>`<tr><td>${esc(u.name)}<td>${esc(u.email)}<td>${esc(u.phone||'-')}<td>${esc(u.role)}<td>${esc(u.role=='DRIVER'?[u.color,u.vehicle,u.plate].filter(Boolean).join(' ')||'-':'-')}<td>${u.role=='DRIVER'?star(u.rating,u.ratingCount):'-'}<td>${fmt(u.created)}<td>${esc([u.utmSource,u.utmMedium,u.utmCampaign].filter(Boolean).join(' / ')||'direct')}<td>${u.active?(u.role=='DRIVER'&&u.available?'<span class=dot></span>Online':'Active'):'Banned'}<td>${u.role!='ADMIN'?`<button class="${u.active?'d':''}" onclick="ban(${Number(u.id)},${!u.active})">${u.active?'Ban':'Unban'}</button>`:''}</tr>`).join('')||'<tr><td>No matching users</tr>'}</table>`}
+function ridesTbl(){const q=AF.r.toLowerCase(),L=D.rs.filter(r=>(AF.s=='ALL'||r.status==AF.s)&&(!q||(r.id+' '+r.pickup+' '+r.drop+' '+r.riderName+' '+r.driverName).toLowerCase().includes(q)));
+ return`<table><tr><th>#<th>Date<th>Rider<th>Driver<th>Route<th>Fare<th>Driver gets<th>Profit<th>Status<th>Paid<th>Rating<th></tr>${L.map(r=>`<tr class="${r.sos?'sos':''}"><td>${r.id}<td>${fmt(r.created)}<td>${esc(r.riderName)}<td>${esc(r.driverName||'-')}<td>${esc(r.pickup)} → ${esc(r.drop)}<td>₹${r.fare}<td>${r.paid?'₹'+r.earning:'-'}<td>${r.paid?'₹'+r.profit:'-'}<td>${esc(r.status)}${r.sos?' <b class=tag>SOS</b>':''}<td>${r.paid?'Yes':'No'}<td>${r.rating??'-'}<td><button class=s onclick="openRide(${Number(r.id)})">Details</button> ${A.includes(r.status)?`<button class=d onclick="cancelRide(${Number(r.id)})">Cancel ride</button>`:''}</tr>`).join('')||'<tr><td>No matching rides</tr>'}</table>`}
+const sosBox=()=>{const L=D.rs.filter(r=>r.sos);return L.length?`<div class="glass card" style="border-color:#a32749"><h3>Active SOS alerts</h3>${L.map(r=>`<div class=card><div><b>Ride #${r.id}</b> · ${esc(r.pickup)} → ${esc(r.drop)}</div><div class=m>Rider: ${esc(r.riderName)} ${esc(r.riderPhone||'(no phone)')} · Driver: ${esc(r.driverName||'none')} ${esc(r.driverPhone||'')}</div>${r.driverLat?`<a href="https://www.openstreetmap.org/?mlat=${Number(r.driverLat)}&amp;mlon=${Number(r.driverLng)}#map=16/${Number(r.driverLat)}/${Number(r.driverLng)}" target=_blank rel=noopener>Open the driver's last location</a>`:''}<button onclick="resolveSos(${Number(r.id)})">Mark resolved</button></div>`).join('')}</div>`:''};
+async function adminView(){const ae=document.activeElement;if(ae&&['INPUT','SELECT'].includes(ae.tagName)&&ae.closest('#admin'))return;
+ try{const[s,us,rs,ts,au]=await Promise.all([api('/admin/stats'),api('/admin/users'),api('/admin/rides'),api('/admin/tickets'),api('/admin/audit')]);D={us,rs};
+ const n=rs.filter(r=>r.sos).length;document.title=(n?'('+n+') SOS | ':'')+'Velo | Cab booking';
+ $('#admin').hidden=false;$('#admin').innerHTML=`<div class=w><h1>Control room</h1>${sosBox()}<div class=kp>${[['Riders',s.riders],['Drivers',s.drivers],['Online drivers',s.onlineDrivers],['Active rides',s.activeRides],['Rides',s.rides],['Completed',s.completed],['Revenue','₹'+s.revenue],['Platform profit','₹'+s.platform],['Driver payouts','₹'+s.payouts],['Awaiting payment','₹'+s.pending],['Open messages',s.openTickets],['SOS alerts',s.sos]].map(x=>`<div class=glass><small>${x[0]}</small><b>${esc(x[1])}</b></div>`).join('')}</div>
+ <h3>Live tracking</h3><div class=glass id=lm style="padding:6px;border-radius:24px;overflow:hidden"></div>
+ <h3>Users</h3><input placeholder="Search name, email, phone or role" value="${esc(AF.u)}" oninput="AF.u=this.value;$('#ut').innerHTML=usersTbl()"><div class="glass tw" id=ut>${usersTbl()}</div>
+ <h3>Rides</h3><div class=seg><input placeholder="Search ride number, place or name" value="${esc(AF.r)}" oninput="AF.r=this.value;$('#rt').innerHTML=ridesTbl()"><select onchange="AF.s=this.value;$('#rt').innerHTML=ridesTbl()">${['ALL','REQUESTED','ACCEPTED','ARRIVED','STARTED','COMPLETED','CANCELLED'].map(x=>`<option ${AF.s==x?'selected':''}>${x}</option>`).join('')}</select><button class=s onclick=exportCsv()>Export CSV</button></div><div class="glass tw" id=rt>${ridesTbl()}</div>
+ <h3>Support messages</h3><div class="glass tw"><table><tr><th>#<th>From<th>Message<th>Status<th>Reply</tr>${ts.map(x=>`<tr><td>${x.id}<td>${esc(x.userName)}<td><b>${esc(x.subject)}</b><br>${esc(x.message)}<td>${esc(x.status)}<td>${x.status=='OPEN'?`<input id=rp${Number(x.id)} placeholder="Reply" maxlength=1000><button onclick="closeT(${Number(x.id)})">Reply and close</button>`:esc(x.reply||'')}</tr>`).join('')||'<tr><td>No messages</tr>'}</table></div>
+ <h3>Admin activity</h3><div class="glass tw"><table><tr><th>When<th>Admin<th>Action<th>Detail</tr>${au.map(a=>`<tr><td>${new Date(a.created).toLocaleString()}<td>${esc(a.admin)}<td>${esc(a.action)}<td>${esc(a.detail)}</tr>`).join('')||'<tr><td>No actions yet</tr>'}</table></div></div>`;liveMap()}catch(e){}}
+const cancelRide=id=>confirmBox('Cancel ride #'+id+'?','The rider and driver will see it as cancelled.','Cancel ride',()=>api('/admin/rides/'+id+'/cancel','POST').then(()=>{adminView();if(DMap)refreshRide(id)}).catch(e=>toast(e.message)));
+const resolveSos=id=>api('/admin/rides/'+id+'/sos/resolve','POST').then(()=>{adminView();if(DMap)refreshRide(id)}).catch(e=>toast(e.message));
+const doBan=(id,a)=>api('/admin/users/'+id+'/active','POST',{active:a}).then(adminView).catch(e=>toast(e.message));
+const ban=(id,a)=>a?doBan(id,a):confirmBox('Ban this user?','They are logged out and cannot log in until you unban them.','Ban user',()=>doBan(id,a));
+// ---------- profile and help ----------
+const fmt=d=>new Date(d).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});
+const FAQ={RIDER:[['What is the trip code?','When a driver accepts, you get a 4-digit code. Tell it to the driver when they arrive. The trip starts only after the driver enters it.'],['How do I book a ride?','Choose Pickup or Drop, then tap the map or search for a place. When both are set the fare appears. Press Book ride.'],['How is the fare worked out?','From the estimated road distance between pickup and drop. You see it before you book, and the booked fare is what you pay.'],['Can I cancel?','Yes, from the ride panel until the trip starts.'],['How do I pay?','When the trip is complete, press Pay in the ride panel. After that you can rate the driver.'],['What does SOS do?','It alerts Velo admins with your ride number. It does not call the police or an ambulance. In an emergency call your local emergency number first (112 in India).'],['Why does a driver show New?','They have not received a rating yet.']],
+ DRIVER:[['How do I start a trip?','At the pickup press I have arrived. Then ask the rider for their 4-digit trip code and enter it to start the trip.'],['How do I get ride requests?','Add your vehicle details in Profile, set your location (tap the map or use GPS), then press Go online. Requests within 20 km appear in the panel.'],['Why can I not go online?','Your vehicle name and number plate must be filled in on your profile, and your location must be set.'],['How are earnings worked out?','You receive 80% of each completed fare. The total is on your profile.'],['What does SOS do?','It alerts Velo admins with your ride number. It does not call emergency services. In an emergency call your local emergency number first.']],ADMIN:[]};
+const sheet=(h,w)=>{const s=$('#sheet');s.hidden=false;document.body.classList.add('ps');s.innerHTML='<div class="glass box"'+(w?' style="width:'+w+'px"':'')+'>'+h+'</div>';s.onclick=e=>{if(e.target.id=='sheet')closeSheet()}};
+const closeSheet=()=>{$('#sheet').hidden=true;document.body.classList.remove('ps');clearInterval(RT);if(DMap){DMap.remove();DMap=null}};
+document.addEventListener('keydown',e=>{if(e.key=='Escape'){const c=$('#cf');if(!c.hidden){c.hidden=true;c.innerHTML=''}else closeSheet()}});
+async function profile(){try{const m=await api('/me'),u=m.user,D=u.role=='DRIVER';
+ sheet(`<div style="display:flex;gap:14px;align-items:center"><div class=av>${esc(u.name.charAt(0).toUpperCase())}</div><div><h2>${esc(u.name)}</h2><p class=m>${esc(u.email)} · ${esc(u.role)} · Member since ${fmt(u.created)}</p></div></div>
+ ${u.role=='ADMIN'?'':`<div class=stats><div><small>${D?'Trips':'Rides'}</small><b>${D?m.completed:m.rides}</b></div><div><small>${D?'Earnings':'Spent'}</small><b>₹${m.amount}</b></div><div><small>${D?'Rating':'Completed'}</small><b>${D?star(u.rating,u.ratingCount)+(u.ratingCount?' ('+u.ratingCount+')':''):m.completed}</b></div></div>`}
+ <h3>Details</h3><label class=f>Name<input id=pn maxlength=60 value="${esc(u.name)}"></label><label class=f>Phone (optional, visible to admins only)<input id=pp maxlength=18 value="${esc(u.phone||'')}"></label>
+ ${D?`<div class=row2><label class=f>Vehicle<input id=pv maxlength=40 value="${esc(u.vehicle||'')}" placeholder="e.g. Maruti Swift"></label><label class=f>Colour<input id=pc maxlength=20 value="${esc(u.color||'')}"></label></div><label class=f>Number plate<input id=pl maxlength=15 value="${esc(u.plate||'')}" placeholder="e.g. OD 02 AB 1234"></label>`:''}
+ <button onclick=saveProfile()>Save details</button><p id=ps class=m role=status></p>
+ <h3>Change password</h3>${pw('cp','Current password','current-password')}${pw('np','New password (8+ characters)','new-password')}<button class=s onclick=savePass()>Change password</button><p id=pe class=m role=status></p><button class=s onclick=closeSheet()>Close</button>`)}catch(e){toast(e.message)}}
+const closeT=id=>api('/admin/tickets/'+id+'/close','POST',{reply:$('#rp'+id).value}).then(adminView).catch(e=>toast(e.message));
+// ---------- live tracking, trip code, alerts ----------
+const hv=(a,b,c,d)=>{const r=Math.PI/180,x=Math.sin((c-a)*r/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin((d-b)*r/2)**2;return 12742*Math.asin(Math.sqrt(x))};
+const etaTxt=a=>{if(!S.drv||!S.drv.lat)return'';const t=a.status=='STARTED'?[a.dLat,a.dLng]:a.status=='ACCEPTED'?[a.pLat,a.pLng]:null;if(!t)return'';
+ const m=Math.max(1,Math.round(hv(S.drv.lat,S.drv.lng,t[0],t[1])*1.3*2)),age=S.drv.at?Math.round((Date.now()-new Date(S.drv.at))/1000):null;
+ return`<div class=m>${a.status=='STARTED'?'About '+m+' min to the drop':'Driver is about '+m+' min away'}${age!==null?' · '+(age<15?'live':'updated '+age+'s ago'):''}</div>`};
+const otpBox=a=>S.otp&&['ACCEPTED','ARRIVED'].includes(a.status)?`<div class=card><small class=m>Trip code. Tell it to your driver to start the trip.</small><div class=big style="letter-spacing:10px">${esc(S.otp)}</div></div>`:'';
+const startTrip=id=>act('/rides/'+id+'/advance','POST',{otp:$('#otp').value});
+let gw=null;
+function startGps(){if(gw!==null||!navigator.geolocation)return;gw=navigator.geolocation.watchPosition(p=>{S.me=[p.coords.latitude,p.coords.longitude]},()=>{toast('GPS unavailable, switched to demo drive');S.demo=true;stopGps();render()},{enableHighAccuracy:true,maximumAge:2000})}
+function stopGps(){if(gw!==null){navigator.geolocation.clearWatch(gw);gw=null}}
+function toggleDemo(){S.demo=!S.demo;S.demo?stopGps():startGps();render()}
+const RN={ACCEPTED:['Driver accepted','A driver is on the way to your pickup.'],ARRIVED:['Your driver has arrived','Tell the driver your trip code to start.'],STARTED:['Trip started','Have a safe ride.'],COMPLETED:['You have arrived','Please pay for your trip.'],CANCELLED:['Ride cancelled','This ride was cancelled.']};
+const DN={CANCELLED:['Ride cancelled','This ride was cancelled.']};
+function notify(t,b){toast(t+'. '+b,6000);if('Notification' in window&&Notification.permission=='granted'){try{new Notification(t,{body:b})}catch{}}}
+function detect(){const D=U.role=='DRIVER',M=D?DN:RN;
+ for(const r of S.mine){const p=S.prev[r.id];if(p&&p!=r.status&&M[r.status])notify(M[r.status][0],M[r.status][1]);S.prev[r.id]=r.status}
+ if(D){const n=S.reqs.length;if(S.reqN!==undefined&&n>S.reqN)notify('New ride request','A rider nearby needs a driver.');S.reqN=n}}
+const enableAlerts=()=>Notification.requestPermission().then(p=>{topbar();toast(p=='granted'?'Alerts are on':'Alerts are blocked in your browser settings')});
+// ---------- admin ride details and live tracking ----------
+let LM=null,LG=null,DMap=null,DG=null,RT=null;
+const tiles=()=>L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:19});
+const liveEl=document.createElement('div');liveEl.style.cssText='height:340px;border-radius:18px;overflow:hidden';
+const cm=(p,c,r,tip,fn)=>{const m=L.circleMarker(p,{radius:r,color:'#fff',weight:2,fillColor:c,fillOpacity:1}).bindTooltip(esc(tip));if(fn)m.on('click',fn);return m};
+function liveMap(){const ph=$('#lm');if(!ph)return;if(!LM){LM=L.map(liveEl).setView([20.2961,85.8245],11);tiles().addTo(LM);LG=L.layerGroup().addTo(LM)}
+ if(liveEl.parentNode!==ph)ph.appendChild(liveEl);LM.invalidateSize();LG.clearLayers();const pts=[],busy=new Set();
+ D.rs.filter(r=>['ACCEPTED','ARRIVED','STARTED'].includes(r.status)&&r.driverId).forEach(r=>{const u=D.us.find(x=>x.id==r.driverId);if(!u||!(u.lat||u.lng))return;busy.add(u.id);
+  const p=[u.lat,u.lng],t=r.status=='STARTED'?[r.dLat,r.dLng]:[r.pLat,r.pLng];
+  L.polyline([p,t],{color:'#e2c25a',weight:2,dashArray:'4 6'}).addTo(LG);cm(t,'#a32749',5,(r.status=='STARTED'?'Drop':'Pickup')+' for ride #'+r.id).addTo(LG);
+  cm(p,'#e2c25a',10,'Ride #'+r.id+' · '+r.driverName+' · '+r.status,()=>openRide(r.id)).addTo(LG);pts.push(p,t)});
+ D.us.filter(u=>u.role=='DRIVER'&&u.active&&u.available&&(u.lat||u.lng)&&!busy.has(u.id)).forEach(u=>{const p=[u.lat,u.lng];cm(p,'#f6f1e7',7,u.name+' · online, free').addTo(LG);pts.push(p)});
+ D.rs.filter(r=>r.status=='REQUESTED').forEach(r=>{const p=[r.pLat,r.pLng];cm(p,'#a32749',7,'Waiting: ride #'+r.id,()=>openRide(r.id)).addTo(LG);pts.push(p)});
+ if(pts.length&&!LM._fit){LM._fit=true;LM.fitBounds(pts,{padding:[40,40],maxZoom:15})}}
+const dur=(a,b)=>a&&b?Math.max(0,Math.round((new Date(b)-new Date(a))/60000))+' min':'-',tm=v=>v?new Date(v).toLocaleString():'-';
+const row=(a,b)=>`<div class=h><span>${esc(a)}</span><span>${esc(b)}</span></div>`;
+function rideDetail(x){LD=x;const r=x.ride,d=x.driver,p=x.rider,tr=x.track,live=d&&['ACCEPTED','ARRIVED','STARTED'].includes(r.status);
+ const tl=[['Requested',r.created],['Driver accepted',r.acceptedAt],['Driver arrived',r.arrivedAt],['Trip started',r.startedAt],['Trip completed',r.completed],['Cancelled'+(r.cancelledBy?' by '+r.cancelledBy:''),r.cancelledAt]].filter(t=>t[1]);
+ return`<div class=seg style="flex-wrap:nowrap"><span class=tag>${esc(r.status)}</span>${r.sos?'<span class=tag>SOS ACTIVE</span>':''}</div>
+ <h3>Timeline</h3>${tl.map(t=>row(t[0],tm(t[1]))).join('')}${row('Time to accept',dur(r.created,r.acceptedAt))}${row('Trip duration',dur(r.startedAt,r.completed))}
+ <h3>Trip</h3><div class=pt>${esc(r.pickup)}</div><div class=pt>${esc(r.drop)}</div>${row('Distance',r.distanceKm+' km')}${row('Pickup coordinates',r.pLat.toFixed(5)+', '+r.pLng.toFixed(5))}${row('Drop coordinates',r.dLat.toFixed(5)+', '+r.dLng.toFixed(5))}
+ <h3>People</h3><div class=card><b>Rider</b>${p?`<div class=m>${esc(p.name)} · ${esc(p.email)} · ${esc(p.phone||'no phone')}</div>`:'<div class=m>Unknown</div>'}</div>
+ <div class=card><b>Driver</b>${d?`<div class=m>${esc(d.name)} · ${esc(d.email)} · ${esc(d.phone||'no phone')}</div><div class=m>${esc([d.color,d.vehicle,d.plate].filter(Boolean).join(' ')||'No vehicle details')} · ${star(d.rating,d.ratingCount)}</div>`:'<div class=m>Not assigned yet</div>'}</div>
+ <h3>Money</h3>${row('Fare','₹'+r.fare)}${row('Payment',r.paid?'Paid':r.status=='COMPLETED'?'Awaiting payment':'Not due yet')}${row('Driver gets','₹'+x.driverShare+(r.paid?'':' (after payment)'))}${row('Platform profit',r.paid?'₹'+x.profit:'-')}${row('Rider rating',r.rating??'-')}
+ <h3>Tracking</h3>${row('Route points recorded',tr.length)}${tr.length?row('First point',tm(tr[0].at))+row('Latest point',tm(tr[tr.length-1].at)):''}${live&&d.at?row('Driver last seen',Math.round((Date.now()-new Date(d.at))/1000)+'s ago'):''}
+ ${live&&(d.lat||d.lng)?`<a href="https://www.openstreetmap.org/?mlat=${Number(d.lat)}&amp;mlon=${Number(d.lng)}#map=16/${Number(d.lat)}/${Number(d.lng)}" target=_blank rel=noopener>Open the driver's position</a>`:''}
+ <div class=seg>${A.includes(r.status)?`<button class=d onclick="cancelRide(${Number(r.id)})">Cancel ride</button>`:''}${r.sos?`<button onclick="resolveSos(${Number(r.id)})">Mark resolved</button>`:''}<button class=s onclick=copyRide()>Copy summary</button><button class=s onclick=window.print()>Print</button><button class=s onclick=closeSheet()>Close</button></div>`}
+async function rideMapDraw(x,first){const r=x.ride,a=[r.pLat,r.pLng],b=[r.dLat,r.dLng],line=await rt(a,b);if(!DMap)return;DG.clearLayers();
+ L.polyline(line,{color:'#e2c25a',weight:4,opacity:.5}).addTo(DG);const tr=x.track.map(p=>[p.lat,p.lng]);if(tr.length>1)L.polyline(tr,{color:'#f6f1e7',weight:3,dashArray:'6 6'}).addTo(DG);
+ cm(a,'#e2c25a',8,'Pickup').addTo(DG);cm(b,'#a32749',8,'Drop').addTo(DG);const d=x.driver;
+ if(d&&(d.lat||d.lng)&&['ACCEPTED','ARRIVED','STARTED'].includes(r.status))cm([d.lat,d.lng],'#f6f1e7',10,'Driver, live').addTo(DG);
+ if(first)DMap.fitBounds([a,b,...tr],{padding:[30,30]})}
+async function refreshRide(id){try{const x=await api('/admin/rides/'+id);if(!DMap)return;$('#dd').innerHTML=rideDetail(x);rideMapDraw(x,false);if(!A.includes(x.ride.status))clearInterval(RT)}catch(e){}}
+async function openRide(id){try{clearInterval(RT);if(DMap){DMap.remove();DMap=null}const x=await api('/admin/rides/'+id);
+ sheet(`<h2>Ride #${Number(x.ride.id)}</h2><div id=dm style="height:280px;border-radius:18px;overflow:hidden"></div><div id=dd>${rideDetail(x)}</div>`,720);
+ DMap=L.map('dm').setView([x.ride.pLat,x.ride.pLng],13);tiles().addTo(DMap);DG=L.layerGroup().addTo(DMap);rideMapDraw(x,true);
+ if(A.includes(x.ride.status))RT=setInterval(()=>refreshRide(id),3000)}catch(e){toast(e.message)}}
+const theme=()=>document.documentElement.dataset.theme||'light';
+function toggleTheme(){const n=theme()=='light'?'dark':'light';document.documentElement.dataset.theme=n;try{localStorage.theme=n}catch(e){}topbar();if(U&&U.role!='ADMIN')draw()}
+function ready(){const l=$('#load');if(!l||l.classList.contains('out'))return;setTimeout(()=>{l.classList.add('out');setTimeout(()=>l.remove(),600);setTimeout(showCk,900)},Math.max(0,1000-performance.now()))}
+setTimeout(ready,4500);
+// ---------- site features: copy, receipt, forms, modals, menu, search, scroll ----------
+let LD=null,SE=null;
+const CHK='<svg class=chk viewBox="0 0 24 24" fill=none stroke="currentColor" stroke-width=2.4 stroke-linecap=round stroke-linejoin=round aria-hidden=true><circle cx=12 cy=12 r=10 opacity=".35"/><path d="M7 12.5l3.2 3.2L17 9"/></svg>';
+function copyText(t){const done=()=>toast('Copied');function fb(){const a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();try{document.execCommand('copy');done()}catch(e){toast('Copy failed')}a.remove()}
+ if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(done,fb);else fb()}
+const copyTrip=()=>{const a=S.act,d=S.drv;if(!a||!d)return;copyText(`Velo ride #${a.id}: ${a.pickup} to ${a.drop}. Driver ${d.name}, ${[d.color,d.vehicle].filter(Boolean).join(' ')}${d.plate?' ('+d.plate+')':''}.`)};
+const copyRide=()=>{if(!LD)return;const r=LD.ride;copyText(`Ride #${r.id} (${r.status}): ${r.pickup} to ${r.drop}, ${r.distanceKm} km, fare Rs ${r.fare}. Rider: ${LD.rider?LD.rider.name:'none'}. Driver: ${LD.driver?LD.driver.name:'none'}.`)};
+async function receipt(id){try{const x=await api('/rides/'+id),r=x.ride,d=x.driver,l=(a,b)=>`<div class=h><span>${esc(a)}</span><span>${esc(b)}</span></div>`;
+ sheet(`<h2>Receipt</h2><p class=m>Velo, ride #${Number(r.id)}</p>${l('Date',tm(r.created))}${l('From',r.pickup)}${l('To',r.drop)}${l('Distance',r.distanceKm+' km')}${d?l('Driver',d.name):''}${d&&d.plate?l('Vehicle',[d.color,d.vehicle,d.plate].filter(Boolean).join(' ')):''}<div class=big>₹${r.fare}<small>${r.paid?'Paid':'Not paid'}</small></div><div class=seg><button onclick=window.print()>Print</button><button class=s onclick=closeSheet()>Close</button></div>`)}catch(e){toast(e.message)}}
+// form helpers
+const pw=(id,ph,auto)=>`<div class=pw><input id=${id} type=password placeholder="${esc(ph)}" autocomplete=${auto}><button type=button class="s tg" aria-pressed=false onclick="showPw('${id}',this)">Show</button></div>`;
+const showPw=(id,b)=>{const i=$('#'+id),s=i.type=='password';i.type=s?'text':'password';b.textContent=s?'Hide':'Show';b.setAttribute('aria-pressed',s)};
+function setErr(id,msg){if(!id)return;const e=$('#E_'+id),i=$('#'+id);if(e)e.textContent=msg||'';if(i&&i.matches('input,textarea'))i.classList.toggle('err',!!msg)}
+function authSubmit(reg){const g=id=>$('#'+id).value.trim();['n','e','p','form'].forEach(k=>setErr(k,''));let ok=true;
+ if(reg&&!g('n')){setErr('n','Enter your name');ok=false}
+ if(!/^[^@\s]{1,64}@[^@\s]{1,190}$/.test(g('e'))){setErr('e','Enter a valid email address');ok=false}
+ const pv=$('#p').value;if(!pv){setErr('p','Enter your password');ok=false}else if(reg&&pv.length<8){setErr('p','Use at least 8 characters');ok=false}
+ if(!ok)return;const b={email:g('e'),password:pv};if(reg){b.name=g('n');b.role=document.querySelector('[name=r]:checked').value;Object.assign(b,utmBody())}
+ const btn=$('#go'),label=btn.textContent;btn.disabled=true;btn.textContent='Please wait';
+ api('/auth/'+(reg?'register':'login'),'POST',b).then(j=>{T=j.token;U=j.user;sessionStorage.t=T;sessionStorage.u=JSON.stringify(U);
+  $('#fi').innerHTML=`<div class=done>${CHK}<h2>${reg?'Account created':'You are logged in'}</h2><p class=m>Opening Velo</p></div>`;setTimeout(()=>location.reload(),800)})
+ .catch(e=>{setErr('form',e.message);btn.disabled=false;btn.textContent=label})}
+// campaign tags (utm) kept for the session and sent with sign up
+(function(){try{const q=new URLSearchParams(location.search),o={};['utm_source','utm_medium','utm_campaign'].forEach(k=>{const v=(q.get(k)||'').replace(/[^A-Za-z0-9 _.+-]/g,'').slice(0,60);if(v)o[k]=v});if(Object.keys(o).length&&!sessionStorage.utm)sessionStorage.utm=JSON.stringify(o)}catch(e){}})();
+function utmBody(){try{const o=JSON.parse(sessionStorage.utm||'{}');return{utmSource:o.utm_source,utmMedium:o.utm_medium,utmCampaign:o.utm_campaign}}catch(e){return{}}}
+// fare estimator for visitors
+async function geo(q){const j=await(await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(q))).json();if(!j[0])throw new Error('Could not find "'+q+'"');return[+j[0].lat,+j[0].lon]}
+async function fareDemo(){const f=$('#ef').value.trim(),t=$('#et').value.trim(),o=$('#eo');o.className='m';
+ if(!f||!t){o.className='ferr';o.textContent='Enter both places.';return}
+ o.textContent='Working it out';
+ try{const a=await geo(f),b=await geo(t),r=await api('/public/estimate','POST',{pLat:a[0],pLng:a[1],dLat:b[0],dLng:b[1]});o.className='okmsg';o.textContent='About ₹'+r.fare+' for '+r.distanceKm+' km, around '+r.etaMin+' min. Create an account to book.'}
+ catch(e){o.className='ferr';o.textContent=e.message||'Could not work that out. Try again.'}}
+// confirmation modal
+function confirmBox(t,m,ok,fn,danger=true){const c=$('#cf');c.hidden=false;c.innerHTML=`<div class="glass box" role=alertdialog aria-modal=true aria-labelledby=cft><h2 id=cft>${esc(t)}</h2><p class=m>${esc(m)}</p><div class=seg><button class=s id=cfn>Keep it</button><button class="${danger?'d':''}" id=cfy>${esc(ok)}</button></div></div>`;
+ const close=()=>{c.hidden=true;c.innerHTML=''};$('#cfn').onclick=close;$('#cfy').onclick=()=>{close();fn()};c.onclick=e=>{if(e.target===c)close()};$('#cfn').focus()}
+const askCancel=id=>confirmBox('Cancel this ride?','The ride is cancelled for everyone. This cannot be undone.','Cancel ride',()=>act('/rides/'+id+'/cancel'));
+const askSos=id=>confirmBox('Send an SOS alert?','Velo admins are alerted with your ride number. This does not call the police or an ambulance. In an emergency call your local emergency number first.','Send SOS',()=>sos(id));
+// help with search, support form states
+const ticketForm=()=>`<div><input id=ts maxlength=80 placeholder="Subject"><div class=ferr id=E_ts role=alert></div></div><div><textarea id=tm maxlength=1000 placeholder="Describe the problem. If it is about a ride, include the ride number."></textarea><div class=ferr id=E_tm role=alert></div></div><div class=ferr id=E_tf role=alert></div><button onclick=sendTicket()>Send message</button>`;
+async function help(focus){let t=[];if(U&&U.role!='ADMIN'){try{t=await api('/tickets')}catch(e){}}
+ const seen=new Set(),L=(U?(FAQ[U.role]||[]):[...FAQ.RIDER,...FAQ.DRIVER]).filter(q=>!seen.has(q[0])&&seen.add(q[0]));
+ sheet(`<div class=h style="align-items:center"><h2>Help</h2><span>Policies updated October 17, 2026</span></div>${L.length?`<input id=hs placeholder="Search help" oninput="helpSearch(this.value)" autocomplete=off><div id=faq>${L.map(q=>`<details><summary>${esc(q[0])}</summary><p>${esc(q[1])}</p></details>`).join('')}</div><p class=m id=hn hidden>No answers match that. Try fewer words.</p>`:''}
+ ${!U?'<p class=m>Log in to message support.</p>':U.role=='ADMIN'?'':`<h3>Contact support</h3><div id=tf>${ticketForm()}</div>${t.length?'<h3>Your messages</h3>'+t.map(x=>`<div class=card><b>${esc(x.subject)}</b><div class=m>${esc(x.message)}</div><div class=h><span>${esc(x.status)} · ${fmt(x.created)}</span></div>${x.reply?`<div>Reply: ${esc(x.reply)}</div>`:''}</div>`).join(''):''}`}
+ <p class=m><a href=/privacy.html target=_blank rel=noopener>Privacy Policy</a> · <a href=/terms.html target=_blank rel=noopener>Terms</a></p><button class=s onclick=closeSheet()>Close</button>`);
+ if(focus=='contact'&&$('#ts'))$('#ts').scrollIntoView({block:'center'})}
+function helpSearch(v){const q=v.trim().toLowerCase();let n=0;document.querySelectorAll('#faq details').forEach(d=>{const m=!q||d.textContent.toLowerCase().includes(q);d.hidden=!m;if(m)n++;d.open=!!q&&m});$('#hn').hidden=n>0}
+function sendTicket(){['ts','tm','tf'].forEach(k=>setErr(k,''));const s=$('#ts').value.trim(),m=$('#tm').value.trim();let ok=true;
+ if(!s){setErr('ts','Add a subject');ok=false}if(m.length<10){setErr('tm','Write at least 10 characters');ok=false}if(!ok)return;
+ api('/tickets','POST',{subject:s,message:m}).then(x=>{$('#tf').innerHTML=`<div class=done>${CHK}<h3>Message sent</h3><p class=m>Reference #${Number(x.id)}. Replies appear under Your messages.</p><button class=s onclick="help('contact')">Send another</button></div>`}).catch(e=>setErr('tf',e.message))}
+function saveProfile(){const b={name:$('#pn').value,phone:$('#pp').value};if($('#pv')){b.vehicle=$('#pv').value;b.color=$('#pc').value;b.plate=$('#pl').value}
+ const o=$('#ps');o.className='m';o.textContent='Saving';
+ api('/me','POST',b).then(u=>{U=u;sessionStorage.u=JSON.stringify(U);topbar();o.className='okmsg';o.textContent='Saved';tick()}).catch(e=>{o.className='ferr';o.textContent=e.message})}
+function savePass(){const o=$('#pe');o.className='m';o.textContent='Changing';
+ api('/me/password','POST',{current:$('#cp').value,password:$('#np').value}).then(j=>{T=j.token;U=j.user;sessionStorage.t=T;sessionStorage.u=JSON.stringify(U);$('#cp').value=$('#np').value='';o.className='okmsg';o.textContent='Password changed. Other devices are logged out.';if(ws)ws.deactivate();connect()}).catch(e=>{o.className='ferr';o.textContent=e.message})}
+// menu, notice, scroll, skip link
+function toggleMenu(b){const m=$('#mi'),o=m.classList.toggle('open');b.setAttribute('aria-expanded',o)}
+document.addEventListener('click',e=>{const m=$('#mi');if(m&&m.classList.contains('open')&&(!e.target.closest('.nav')||e.target.closest('.mi button')))m.classList.remove('open')});
+function showCk(){try{if(localStorage.ckOk)return}catch(e){}$('#ck').hidden=false}
+function okCk(){try{localStorage.ckOk=1}catch(e){}$('#ck').hidden=true}
+function watchScroll(el){if(!el)return;el.addEventListener('scroll',()=>{SE=el;const m=el.scrollHeight-el.clientHeight;$('#prog').style.transform='scaleX('+(m>0?el.scrollTop/m:0)+')';$('#totop').hidden=el.scrollTop<400},{passive:true})}
+['#auth','#admin'].forEach(s=>watchScroll($(s)));
+const toTop=()=>{if(SE)SE.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'})};
+function skipTo(e){e.preventDefault();const t=document.querySelector('#auth:not([hidden]) input,#admin:not([hidden]) button,#panel:not([hidden]) button,#panel:not([hidden]) input');(t||document.body).focus()}
+// ---------- engine ----------
+const render=()=>!U?authView():U.role=='DRIVER'?driver():rider();
+function sub(d){if(d&&ws&&ws.connected&&!subs[d])subs[d]=ws.subscribe(d,()=>U.role=='ADMIN'?adminView():tick())}
+function connect(){ws=new StompJs.Client({brokerURL:(location.protocol=='https:'?'wss://':'ws://')+location.host+'/ws',connectHeaders:{Authorization:'Bearer '+T},reconnectDelay:5000,onConnect:()=>{subs={};sub(U.role=='DRIVER'?'/topic/requests':U.role=='ADMIN'?'/topic/admin':null)}});ws.activate()}
+async function tick(){try{S.mine=await api('/rides/mine');const D=U.role=='DRIVER';
+ S.act=S.mine.find(r=>A.includes(r.status)||(!D&&r.status=='COMPLETED'&&(!r.paid||r.rating==null)&&!S.skip.has(r.id)))||null;S.drv=S.rider=S.otp=S.earn=null;
+ if(S.act&&S.act.driverId){const d=await api('/rides/'+S.act.id);S.drv=d.driver;S.rider=d.rider||null;S.otp=d.otp||null;S.earn=d.earning??null;S.act=d.ride}
+ if(D){S.stat=await api('/driver/stats');if(!S.me&&(S.stat.lat||S.stat.lng))S.me=[S.stat.lat,S.stat.lng];S.reqs=!S.act&&S.stat.available?await api('/driver/requests'):[];if(!S.demo&&S.me&&(S.act||S.stat.available))await api('/driver/status','POST',{lat:S.me[0],lng:S.me[1]});if(S.act&&S.demo)await simulate()}
+ if(S.act)sub('/topic/ride/'+S.act.id);
+ detect();const g=JSON.stringify([U.role=='RIDER'&&S.drv?[Math.round(S.drv.lat*1e4),Math.round(S.drv.lng*1e4)]:0,S.mine.map(r=>[r.id,r.status,r.paid,r.rating]),S.reqs.map(r=>r.id),S.stat&&[S.stat.earnings,S.stat.trips,S.stat.available,S.stat.rating],S.skip.size]);if(g!=sig){sig=g;render()}draw()}catch(e){}}
+function topbar(){const th=`<button class=s onclick=toggleTheme()>${theme()=='light'?'Dark':'Light'}</button>`,al=('Notification' in window&&Notification.permission=='default')?'<button class=s onclick=enableAlerts()>Turn on alerts</button>':'';
+ const items=U?`<button class=s onclick=profile()>Profile</button><button class=s onclick=help()>Help</button>${al}${th}<button class=s onclick=logout()>Log out</button>`:`<button class=s onclick=help()>Help</button>${th}`;
+ $('#top').innerHTML=`<div class="logo glass pad">vel<i>o</i></div><div class="glass pad nav">${U?`<span class=who>${esc(U.name)} · ${esc(U.role)}</span>`:''}<div class=mi id=mi>${items}</div><button class="s mb" aria-expanded=false aria-controls=mi onclick=toggleMenu(this)>Menu</button></div>`;
+ $('#fab').hidden=!!(U&&U.role=='ADMIN')}topbar();
+if(!U){authView();ready()}else if(U.role=='ADMIN'){$('#panel').hidden=true;connect();adminView().finally(ready);setInterval(adminView,6000)}
+else{render();connect();tick().finally(ready);setInterval(tick,3000);navigator.geolocation?.getCurrentPosition(p=>map.setView([p.coords.latitude,p.coords.longitude],13))}
+</script></body></html>
